@@ -111,5 +111,5 @@ ToDoCtrl = ($scope) ->
         $scope.tasks[index].pomoCnt--   if $scope.tasks[index].pomoCnt >0
         
     $scope.startPomo = (task) ->
-        $scope.startPomodoro(task,0,10) if task.pomoCnt > 0
+        $scope.startPomodoro(task,25,0) if task.pomoCnt > 0
            

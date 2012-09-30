@@ -133,7 +133,7 @@ ToDoCtrl = function($scope) {
   };
   return $scope.startPomo = function(task) {
     if (task.pomoCnt > 0) {
-      return $scope.startPomodoro(task, 0, 10);
+      return $scope.startPomodoro(task, 25, 0);
     }
   };
 };
