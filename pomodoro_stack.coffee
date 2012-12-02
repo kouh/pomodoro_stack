@@ -6,10 +6,16 @@ angular.module('MyModule', [])
                 while(out.length < num)
                     out = "0" + out
                 return out
+    .filter 'range', ->
+        return (input, total)->
+            total = parseInt(total)
+            input.push(i) for i in [0...total]
+            return input
 
 # Model
 class Task
     constructor:(@body) ->
+        @doneCnt = 0
         @done = false
         @pomoCnt = 0
 
@@ -41,50 +47,95 @@ notificateToDesktop = (title ,body,timeUpSec)->
 # controller
 TimerCtrl = ($scope) ->
     ids = []
-    
+
+    currentStatus = "停止"
+
+    $('#tasks').sortable({
+        handle : '.drag'
+        #cursor: 'move'
+        opacity : 0.5
+        update : (event,ui) ->
+            idStrs = $(this).sortable("toArray")
+
+            oldTasks = $scope.tasks
+            $scope.tasks = []
+            angular.forEach(idStrs,(id)->
+               $scope.tasks.push(oldTasks[id.split('_')[1]])
+            )
+
+            $scope.$apply()
+    })
+
+    $scope.tasks = []  
+
     $scope.time = new Date(0, 0, 0, 0, 0, 0)
     
     
     $scope.stop = ()->
         clearInterval i for i in ids
-        ids =[]
+        ids = []
         $scope.time = new Date(0, 0, 0, 0, 0, 0)
+        currentStatus = "停止"
     
     $scope.startPomodoro = (task,min,sec)->
+        currentStatus = "タスク中"
         startTimer(min,sec,->
             task.pomoCnt--
             
             notificateToDesktop("ポモドーロ終了", "ポモドーロが終了しました。休憩時間に入ります。",10)
             
             # 休憩
+            currentStatus = "小休憩"
             startTimer(5,0,->
                 notificateToDesktop("休憩終了", "休憩時間が終了しました。")
+                currentStatus = "停止"
             )
         )
-        
+    
+    titleTag = $("title")
+
     startTimer =  (min,sec,onFinish)->
         clearInterval i for i in ids
-        ids =[]
-        $scope.time = new Date(0, 0, 0,0,min,sec)
+        ids = []
+        $scope.time = new Date(0, 0, 0, 0, min, sec)
         
         id = setInterval( ->
             $scope.time.setSeconds( $scope.time.getSeconds() - 1 )
 
             $scope.$apply()
+
+            titleTag.text($scope.time.getMinutes() + ":" + $scope.time.getSeconds() + " " + currentStatus)
             
             if $scope.time.getSeconds() is 0 and $scope.time.getMinutes() is 0
                 clearInterval id
-                ids=[]
+                ids = []
                 if onFinish then onFinish()
         ,1000)
         
         ids.push id
     
         
-ToDoCtrl = ($scope) ->
+#ToDoCtrl = ($scope) ->
+    $scope.getCurrentTask = ->
+        for task in $scope.tasks
+            if !task.done
+                return currentTask = task
+        return undefined
+    
 
-    $scope.tasks = [
-    ]  
+    $scope.getFinishedPomodoroCount = ->
+        count = 0
+        angular.forEach($scope.tasks,(task)->
+            count += task.doneCnt
+        )
+        count
+
+    $scope.getTotalPomodoroCount = ->
+        count = 0
+        angular.forEach($scope.tasks,(task)->
+            count += task.pomoCnt
+        )
+        count
     
     $scope.addNew = ->
         $scope.tasks.push new Task($scope.newTaskBody)
@@ -95,11 +146,11 @@ ToDoCtrl = ($scope) ->
         angular.forEach($scope.tasks,(task)->
             count += 1  if task.done
         )
-        return count
+        count
     
     $scope.deleteDone = ->
         oldTasks = $scope.tasks
-        $scope.tasks=[]
+        $scope.tasks = []
         angular.forEach(oldTasks,(task)->
             if !task.done then $scope.tasks.push(task)
         )

@@ -1,54 +1,92 @@
 <!doctype html>
-<html lang=ja ng-app="MyModule">
+<html lang="ja" ng-app="MyModule">
   <head>
-    <meta charset=utf-8>
+    <meta charset="utf-8">
     <title>Pomodoro Stack</title>
     <link rel="shortcut icon" href="favicon.ico" >
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
     <style>
+        #timer {
+            font-size: 300%;
+        }
+
+        #current_task{
+            font-size: 150%;
+        }
+
+        #pomodoro_img_box{
+            height: 30px;
+
+        }
+
         .done-true{
-            color:gray;
-            text-decoration:line-through;
+            color: gray;
+            text-decoration: line-through;
         }
         
         .task-body{
             display: inline-block;
-            width:300px;
+            width: 300px;
+            font-size: small;
+            border-style: none;
+        }
+
+        .task-body:focus{
+            border-style: none;
+            background: #eeeeee;
+        }
+
+        #tasks > li {
+            list-style-type: none;
         }
         
         #tasks > li > *{
-            vertical-align:middle;
-            font-size:120%;
-            margin:0;
-            padding:0;
+            vertical-align: middle;
+
+            margin: 0;
+            padding: 0;
             word-wrap: break-word;
         }
+
+        .drag:hover{
+            cursor: hand;
+        }
     </style>
-    <script src=http://code.angularjs.org/1.1.0/angular.min.js></script>
-    <script src=pomodoro_stack.js></script>
+    <script src="http://code.angularjs.org/1.1.1/angular.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+    <script src="pomodoro_stack.js"></script>
   </head>
   <body ng-controller="TimerCtrl">
     <div>
-      <h1>{{time | date:'mm:ss'}}</h1>
-      <button ng-click="stop()">Stop</button>
+      <p id="timer">{{time | date:'mm:ss'}}</p>
+      <p>current task：<span id="current_task">&nbsp;{{getCurrentTask().body}}</span></p>
+      <div id="pomodoro_img_box">
+        <img ng-repeat="n in [] | range:getCurrentTask().pomoCnt" class="tomate_icon" src="tomate.gif" width="25" height="25"></img>
+      </div>
+      <div>
+          <button ng-click="startPomo(getCurrentTask())">Start</button>
+          <button ng-click="stop()">Stop</button>
+      </div>
     </div>
-    <div ng-controller="ToDoCtrl">
-        <p>Finished Task: {{getDoneCount()}} / {{tasks.length}}
+    <div>
+        <p>Finished Task: {{getDoneCount()}} / {{tasks.length}}<br/>
+           Finished Pomodoro: {{getFinishedPomodoroCount()}} / {{getTotalPomodoroCount()}}
             <button ng-click="deleteDone()">Delete Finished</button>
         </p>
-        <ul id=tasks>
-            <li ng-repeat="task in tasks">
-                <input type=checkbox ng-model="task.done">
-                <span class="task-body done-{{task.done}}" contenteditable>{{task.body}}</span>
-                <button href ng-click="addPomodoro($index)">+1</button>
-                <button href ng-click="deletePomodoro($index)">-1</button>
-                <img class=tomate_icon ng-click="startPomo(task)" src=tomate.gif width=25 height=25></img>
-                <span>×{{task.pomoCnt}}</span>
-                <button ng-click="tasks.splice($index,1)">Delete</button>
+        <ul id="tasks">
+            <li id="task_{{$index}}" ng-repeat="task in tasks">
+                <img class="drag" src="drag.png" />
+                <input type="checkbox" ng-model="task.done" />
+                <input type="text" class="task-body done-{{task.done}}" ng-model="task.body" />
+                <img ng-click="addPomodoro($index)" src="plus.png">
+                <img ng-click="deletePomodoro($index)" src="minus.png">
+                <span>{{task.pomoCnt}} pomodoro</span>
             </li>
         </ul>
         <form ng-submit="addNew()">
-            <input type=text ng-model=newTaskBody>
-            <input type=submit value=add>
+            <input type="text" ng-model="newTaskBody">
+            <input type="submit" value="add">
         </form>
     </div>    
   </body>
